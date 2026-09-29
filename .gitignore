@@ -1,0 +1,11 @@
+# Build output
+ClaudeUsage.app/
+*.app/
+*.dSYM/
+
+# macOS
+.DS_Store
+
+# Never commit credentials
+.credentials.json
+*.credentials.json
