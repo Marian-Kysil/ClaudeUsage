@@ -652,22 +652,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
         return barTextColor.withAlphaComponent(0.55)
     }
 
+    /// Гліф із Figma (assets/MenuBarIcon) — template-зображення; nil, якщо ресурсу немає.
+    private var barGlyph: NSImage? { Bundle.main.image(forResource: "MenuBarIcon") }
+
     /// Показує текст у рядку меню — або як є, або на заокругленій «пігулці» кольору фону.
     private func render(_ str: NSAttributedString) {
         guard let button = statusItem.button else { return }
+        let glyph = barGlyph
         guard Prefs.showBackground else {
-            button.image = nil
+            if let glyph {
+                let icon = NSImage(size: NSSize(width: 14, height: 14), flipped: false) { rect in
+                    glyph.draw(in: rect); return true
+                }
+                icon.isTemplate = true
+                button.image = icon
+                button.imagePosition = .imageLeading
+            } else {
+                button.image = nil
+            }
             button.attributedTitle = str
             return
         }
         let padX: CGFloat = 7, height: CGFloat = 18
+        let iconSize: CGFloat = 12, iconGap: CGFloat = 4
+        let iconW = glyph == nil ? 0 : iconSize + iconGap
         let textSize = str.size()
-        let size = NSSize(width: ceil(textSize.width) + padX * 2, height: height)
+        let size = NSSize(width: ceil(textSize.width) + padX * 2 + iconW, height: height)
         let bg = Prefs.backgroundColor
+        let tint = barTextColor
         let image = NSImage(size: size, flipped: false) { rect in
             bg.setFill()
             NSBezierPath(roundedRect: rect, xRadius: 5, yRadius: 5).fill()
-            str.draw(at: NSPoint(x: padX, y: (height - textSize.height) / 2))
+            if let glyph {
+                let r = NSRect(x: padX, y: (height - iconSize) / 2, width: iconSize, height: iconSize)
+                let tinted = NSImage(size: r.size, flipped: false) { tr in
+                    glyph.draw(in: tr)
+                    tint.setFill()
+                    tr.fill(using: .sourceIn)
+                    return true
+                }
+                tinted.draw(in: r)
+            }
+            str.draw(at: NSPoint(x: padX + iconW, y: (height - textSize.height) / 2))
             return true
         }
         image.isTemplate = false
@@ -681,7 +707,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
         var shown = limits.filter { short[$0.key] != nil }
         if shown.isEmpty { shown = Array(limits.prefix(1)) }
         guard !shown.isEmpty else {
-            setTitle(lastError == nil ? "✳︎ …" : "✳︎ ⚠︎")
+            let mark = barGlyph == nil ? "✳︎ " : ""
+            setTitle(lastError == nil ? "\(mark)…" : "\(mark)⚠︎")
             return
         }
         let str = NSMutableAttributedString()

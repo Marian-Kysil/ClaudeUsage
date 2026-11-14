@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Generated icon">
+<g id="Frame" clip-path="url(#clip0_0_1)">
+<g id="background">
+<path id="Vector" d="M400 0H112C50.1441 0 0 50.1441 0 112V400C0 461.856 50.1441 512 112 512H400C461.856 512 512 461.856 512 400V112C512 50.1441 461.856 0 400 0Z" fill="#242321"/>
+</g>
+<g id="usage-gauge">
+<path id="Vector_2" d="M256 415C343.813 415 415 343.813 415 256C415 168.187 343.813 97 256 97C168.187 97 97 168.187 97 256C97 343.813 168.187 415 256 415Z" stroke="#494640" stroke-width="34"/>
+<path id="Vector_3" d="M256 97C287.447 97 318.188 106.325 344.336 123.796C370.483 141.267 390.863 166.1 402.897 195.153C414.931 224.207 418.08 256.176 411.945 287.019C405.81 317.862 390.667 346.193 368.43 368.43C346.193 390.667 317.862 405.81 287.019 411.945C256.176 418.08 224.207 414.931 195.153 402.897C166.1 390.863 141.267 370.483 123.796 344.336C106.325 318.188 97 287.447 97 256" stroke="#D97757" stroke-width="34" stroke-linecap="round"/>
+</g>
+<g id="terminal-prompt">
+<path id="Vector_4" d="M183 218L225 256L183 294" stroke="#F4EDE2" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_5" d="M257 294H329" stroke="#F4EDE2" stroke-width="22" stroke-linecap="round"/>
+</g>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_1">
+<rect width="512" height="512" fill="white"/>
+</clipPath>
+</defs>
+</svg>
