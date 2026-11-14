@@ -287,20 +287,42 @@ enum UsageClient {
         throw FetchError.noCredentials
     }
 
+    /// Токен у пам'яті: Keychain читаємо лише коли кеш порожній або токен майже сплив,
+    /// щоб не викликати системний діалог на кожному опитуванні.
+    nonisolated(unsafe) private static var cachedToken: (token: String, expiresAt: Date?)?
+
     static func accessToken() throws -> String {
+        if let c = cachedToken, c.expiresAt.map({ $0 > Date().addingTimeInterval(60) }) ?? true {
+            return c.token
+        }
         let json = try credentialsJSON()
         guard let oauth = json["claudeAiOauth"] as? [String: Any],
               let token = oauth["accessToken"] as? String, !token.isEmpty else {
             throw FetchError.noCredentials
         }
-        if let exp = (oauth["expiresAt"] as? NSNumber)?.doubleValue,
-           Date(timeIntervalSince1970: exp / 1000) < Date() {
-            throw FetchError.tokenExpired
+        var expiresAt: Date?
+        if let exp = (oauth["expiresAt"] as? NSNumber)?.doubleValue {
+            expiresAt = Date(timeIntervalSince1970: exp / 1000)
+            if expiresAt! < Date() {
+                cachedToken = nil
+                throw FetchError.tokenExpired
+            }
         }
+        cachedToken = (token, expiresAt)
         return token
     }
 
     static func fetch() async throws -> [Limit] {
+        do {
+            return try await fetchOnce()
+        } catch FetchError.tokenExpired {
+            // Claude Code міг оновити токен: скидаємо кеш і пробуємо ще раз.
+            cachedToken = nil
+            return try await fetchOnce()
+        }
+    }
+
+    private static func fetchOnce() async throws -> [Limit] {
         let token = try accessToken()
 
         var req = URLRequest(url: endpoint,

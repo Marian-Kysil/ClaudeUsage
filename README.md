@@ -68,7 +68,7 @@ Launch it from `/Applications`. The login item points to the copy that ran first
 
 On first launch macOS asks for two permissions:
 
-- **Keychain:** access to the `Claude Code-credentials` item. Click **Always Allow**. The app is signed only locally, so you may be asked again after each rebuild.
+- **Keychain:** access to the `Claude Code-credentials` item. Click **Always Allow**. `build.sh` signs the app with a stable self-signed certificate ("ClaudeUsage Local", created once), so the grant survives rebuilds; the token is also cached in memory, so the Keychain is read only when it expires.
 - **Notifications:** allow them if you want the 90 % alert.
 
 macOS may also show a "Background item added" notice for the login item. That's expected.
