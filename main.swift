@@ -521,6 +521,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
     private var timer: Timer?
     private var interval: TimeInterval = 300   // 5 хвилин
     private var isFetching = false
+    /// Після відмови в Keychain автоматичні опитування зупиняються (щоб діалог не вискакував знову);
+    /// відновлює їх лише ручне «Оновити».
+    private var keychainBlocked = false
 
     private let barFont = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
 
@@ -545,12 +548,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
     }
 
     @objc private func didWake() {
-        perform(#selector(refresh), with: nil, afterDelay: 10)
+        perform(#selector(autoRefresh), with: nil, afterDelay: 10)
     }
 
+    /// Виклик із таймера й після пробудження: пропускається, поки доступ до Keychain заблоковано.
+    @objc private func autoRefresh() {
+        guard !keychainBlocked else { return }
+        refresh()
+    }
+
+    /// Запуск і ручне «Оновити»: завжди пробує знову.
     @objc private func refresh() {
         guard !isFetching else { return }
         isFetching = true
+        keychainBlocked = false
         Task {
             do {
                 // Лише відомі ліміти: сервер може повертати й внутрішні, без зрозумілої назви.
@@ -561,6 +572,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
                 checkThresholds()
             } catch let e as FetchError {
                 lastError = e
+                keychainBlocked = (e == .keychainDenied)
                 interval = (e == .rateLimited) ? min(interval * 2, 3600) : 300
             } catch {
                 lastError = .network(error.localizedDescription)
@@ -614,8 +626,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, UNUser
 
     private func scheduleNext() {
         timer?.invalidate()
+        timer = nil
+        if keychainBlocked { return }
         let t = Timer(timeInterval: interval, target: self,
-                      selector: #selector(refresh), userInfo: nil, repeats: false)
+                      selector: #selector(autoRefresh), userInfo: nil, repeats: false)
         t.tolerance = 60   // дозволяє системі групувати пробудження — економія батареї
         RunLoop.main.add(t, forMode: .common)
         timer = t
